@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="{{ with .Site.LanguageCode }}{{ . }}{{ else }}en-US{{ end }}">
+  <head>
+    <meta http-equiv="X-Clacks-Overhead" content="GNU Terry Pratchett" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    {{- partial "favicon.html" . -}}
+    <title>
+      {{- block "title" . }}{{ with .Title }}{{ . }} | {{ end }}{{ .Site.Title
+      }}{{- end }}
+    </title>
+
+    {{- partial "seo_tags.html" . -}}
+    <meta name="referrer" content="no-referrer-when-downgrade" />
+
+    {{ with .OutputFormats.Get "rss" -}} {{ printf `
+    <link rel="%s" type="%s" href="%s" title="%s" />
+    ` .Rel .MediaType.Type .Permalink $.Site.Title | safeHTML }} {{ end -}} {{-
+    partial "style.html" . -}}
+
+    <!-- A partial to be overwritten by the user.
+  Simply place a custom_head.html into
+  your local /layouts/partials-directory -->
+    {{- partial "custom_head.html" . -}}
+  </head>
+
+  <body>
+    <header>{{- partial "header.html" . -}}</header>
+    <main>{{- block "main" . }}{{- end }}</main>
+    <footer>
+      {{- partial "footer.html" . -}}
+      <button class="theme-switcher">Dark theme</button>
+    </footer>
+
+    <!-- A partial to be overwritten by the user.
+  Simply place a custom_body.html into
+  your local /layouts/partials-directory -->
+    {{- partial "custom_body.html" . -}}
+  </body>
+</html>
+
+<script>
+  const STORAGE_KEY = "user-color-scheme";
+  const defaultTheme = "auto";
+
+  let currentTheme;
+  let switchButton;
+  let autoDefinedScheme = window.matchMedia("(prefers-color-scheme: dark)");
+
+  const autoChangeScheme = (e) => {
+    currentTheme = e.matches ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", currentTheme);
+    changeButtonText();
+  };
+
+  document.addEventListener("DOMContentLoaded", function () {
+    switchButton = document.querySelector(".theme-switcher");
+    currentTheme = detectCurrentScheme();
+    if (currentTheme == "dark") {
+      document.documentElement.setAttribute("data-theme", "dark");
+    } else{
+      document.documentElement.setAttribute("data-theme", "light");
+    }
+
+    
+    if (currentTheme == "auto") {
+      autoChangeScheme(autoDefinedScheme);
+      autoDefinedScheme.addListener(autoChangeScheme);
+    }
+
+    if (switchButton) {
+      changeButtonText();
+      switchButton.addEventListener("click", switchTheme, false);
+    }
+
+    showContent();
+  });
+
+  function detectCurrentScheme() {
+    if (localStorage !== null && localStorage.getItem(STORAGE_KEY)) {
+      return localStorage.getItem(STORAGE_KEY);
+    }
+    if (defaultTheme) {
+      return defaultTheme;
+    }
+    if (!window.matchMedia) {
+      return "light";
+    }
+    if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+      return "dark";
+    }
+    return "light";
+  }
+
+  function changeButtonText() {
+    if (switchButton) {
+      switchButton.textContent =
+        currentTheme == "dark" ? "Light theme" : "Dark theme";
+    }
+  }
+
+  function switchTheme(e) {
+    if (currentTheme == "dark") {
+      if (localStorage !== null) localStorage.setItem(STORAGE_KEY, "light");
+      document.documentElement.setAttribute("data-theme", "light");
+      currentTheme = "light";
+    } else {
+      if (localStorage !== null) localStorage.setItem(STORAGE_KEY, "dark");
+      document.documentElement.setAttribute("data-theme", "dark");
+      currentTheme = "dark";
+    }
+    changeButtonText();
+  }
+
+  function showContent() {
+    document.body.style.visibility = "visible";
+    document.body.style.opacity = 1;
+  }
+</script>
